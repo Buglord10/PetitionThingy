@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { sql } from "drizzle-orm";
+import { pgTable, varchar, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
 
 // UK Government Petition Schema
 export const petitionAttributesSchema = z.object({
@@ -73,6 +76,29 @@ export type PetitionsResponse = z.infer<typeof petitionsResponseSchema>;
 // Filter and sort options
 export const petitionStatusSchema = z.enum(["all", "open", "closed", "rejected", "awaiting_response"]);
 export const petitionSortSchema = z.enum(["signature_count", "created_at", "closing_soon"]);
+export const signatureRangeSchema = z.enum(["all", "under_10k", "10k_to_100k", "over_100k"]);
 
 export type PetitionStatus = z.infer<typeof petitionStatusSchema>;
 export type PetitionSort = z.infer<typeof petitionSortSchema>;
+export type SignatureRange = z.infer<typeof signatureRangeSchema>;
+
+// Database tables for notification system
+export const trackedPetitions = pgTable("tracked_petitions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  petitionId: integer("petition_id").notNull(),
+  petitionTitle: varchar("petition_title", { length: 500 }).notNull(),
+  currentSignatures: integer("current_signatures").notNull(),
+  notifyAt10k: boolean("notify_at_10k").notNull().default(true),
+  notifyAt100k: boolean("notify_at_100k").notNull().default(true),
+  notified10k: boolean("notified_10k").notNull().default(false),
+  notified100k: boolean("notified_100k").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+});
+
+export const insertTrackedPetitionSchema = createInsertSchema(trackedPetitions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type TrackedPetition = typeof trackedPetitions.$inferSelect;
+export type InsertTrackedPetition = z.infer<typeof insertTrackedPetitionSchema>;

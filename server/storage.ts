@@ -1,13 +1,28 @@
-import type { Petition, PetitionsResponse, PetitionStatus, PetitionSort } from "@shared/schema";
+import type { Petition, PetitionsResponse, PetitionStatus, PetitionSort, SignatureRange, TrackedPetition, InsertTrackedPetition } from "@shared/schema";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import { trackedPetitions } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import ws from "ws";
+
+neonConfig.webSocketConstructor = ws;
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = drizzle(pool);
 
 export interface IStorage {
   fetchPetitions(params: { 
     status?: PetitionStatus; 
     sort?: PetitionSort; 
+    signatureRange?: SignatureRange;
     search?: string;
     page?: number; 
   }): Promise<PetitionsResponse>;
   fetchPetitionById(id: string): Promise<Petition | null>;
+  trackPetition(data: InsertTrackedPetition): Promise<TrackedPetition>;
+  untrackPetition(petitionId: number): Promise<void>;
+  getTrackedPetitions(): Promise<TrackedPetition[]>;
+  isTracking(petitionId: number): Promise<boolean>;
 }
 
 export class UKGovPetitionStorage implements IStorage {
@@ -37,10 +52,11 @@ export class UKGovPetitionStorage implements IStorage {
   async fetchPetitions(params: { 
     status?: PetitionStatus; 
     sort?: PetitionSort; 
+    signatureRange?: SignatureRange;
     search?: string;
     page?: number;
   }): Promise<PetitionsResponse> {
-    const { status = "all", sort = "signature_count", search = "", page = 1 } = params;
+    const { status = "all", sort = "signature_count", signatureRange = "all", search = "", page = 1 } = params;
     
     // Build API endpoint
     let endpoint = "/petitions.json?";
@@ -67,6 +83,23 @@ export class UKGovPetitionStorage implements IStorage {
         petition.attributes.background?.toLowerCase().includes(searchLower) ||
         petition.attributes.additional_details?.toLowerCase().includes(searchLower)
       );
+    }
+
+    // Apply signature range filter
+    if (signatureRange !== "all") {
+      data.data = data.data.filter((petition: Petition) => {
+        const count = petition.attributes.signature_count;
+        switch (signatureRange) {
+          case "under_10k":
+            return count < 10000;
+          case "10k_to_100k":
+            return count >= 10000 && count < 100000;
+          case "over_100k":
+            return count >= 100000;
+          default:
+            return true;
+        }
+      });
     }
 
     // Apply sorting
@@ -97,6 +130,31 @@ export class UKGovPetitionStorage implements IStorage {
       console.error(`Error fetching petition ${id}:`, error);
       return null;
     }
+  }
+
+  async trackPetition(data: InsertTrackedPetition): Promise<TrackedPetition> {
+    const [tracked] = await db.insert(trackedPetitions)
+      .values(data)
+      .onConflictDoNothing()
+      .returning();
+    return tracked;
+  }
+
+  async untrackPetition(petitionId: number): Promise<void> {
+    await db.delete(trackedPetitions)
+      .where(eq(trackedPetitions.petitionId, petitionId));
+  }
+
+  async getTrackedPetitions(): Promise<TrackedPetition[]> {
+    return await db.select().from(trackedPetitions);
+  }
+
+  async isTracking(petitionId: number): Promise<boolean> {
+    const result = await db.select()
+      .from(trackedPetitions)
+      .where(eq(trackedPetitions.petitionId, petitionId))
+      .limit(1);
+    return result.length > 0;
   }
 }
 

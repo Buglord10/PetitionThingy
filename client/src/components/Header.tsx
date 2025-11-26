@@ -1,6 +1,8 @@
-import { Search, RefreshCw } from "lucide-react";
+import { Search, RefreshCw, GitCompare, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 interface HeaderProps {
   searchQuery: string;
@@ -29,6 +31,18 @@ export function Header({ searchQuery, onSearchChange, lastRefreshed, isRefreshin
                 UK Government Petitions
               </h1>
               <div className="flex items-center gap-2">
+                <Link href="/tracked">
+                  <Button variant="outline" size="sm" className="gap-2 bg-white" data-testid="button-tracked">
+                    <Bell className="h-4 w-4" />
+                    <span className="hidden sm:inline">Tracked</span>
+                  </Button>
+                </Link>
+                <Link href="/compare">
+                  <Button variant="outline" size="sm" className="gap-2 bg-white" data-testid="button-compare">
+                    <GitCompare className="h-4 w-4" />
+                    <span className="hidden sm:inline">Compare</span>
+                  </Button>
+                </Link>
                 {isRefreshing && (
                   <Badge variant="secondary" className="gap-1.5">
                     <RefreshCw className="h-3 w-3 animate-spin" data-testid="icon-refreshing" />

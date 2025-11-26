@@ -16,6 +16,9 @@ import {
   MessageSquare
 } from "lucide-react";
 import type { Petition } from "@shared/schema";
+import { SignatureGraph } from "@/components/SignatureGraph";
+import { ShareButtons } from "@/components/ShareButtons";
+import { TrackButton } from "@/components/TrackButton";
 
 export default function PetitionDetail() {
   const [, params] = useRoute("/petition/:id");
@@ -115,12 +118,19 @@ export default function PetitionDetail() {
     <div className="min-h-screen bg-background">
       <header className="bg-primary border-b border-primary-border">
         <div className="max-w-[1200px] mx-auto px-5 md:px-10 py-4 md:py-5">
-          <Link href="/">
-            <Button variant="outline" className="gap-2 bg-white" data-testid="button-back">
-              <ArrowLeft className="h-4 w-4" />
-              Back to dashboard
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Link href="/">
+              <Button variant="outline" className="gap-2 bg-white" data-testid="button-back">
+                <ArrowLeft className="h-4 w-4" />
+                Back to dashboard
+              </Button>
+            </Link>
+            <TrackButton
+              petitionId={petition.id}
+              petitionTitle={attributes.action}
+              currentSignatures={signatureCount}
+            />
+          </div>
         </div>
       </header>
 
@@ -197,6 +207,21 @@ export default function PetitionDetail() {
                 </p>
               )}
             </div>
+
+            {/* Signature Growth Graph */}
+            <SignatureGraph
+              signatureCount={signatureCount}
+              createdAt={attributes.created_at}
+              responseThresholdReachedAt={attributes.response_threshold_reached_at}
+              debateThresholdReachedAt={attributes.debate_threshold_reached_at}
+            />
+
+            {/* Share Buttons */}
+            <ShareButtons
+              petitionTitle={attributes.action}
+              petitionId={petition.id}
+              signatureCount={signatureCount}
+            />
 
             {/* Petition Details */}
             {attributes.background && (

@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/Dashboard";
 import PetitionDetail from "@/pages/PetitionDetail";
+import Compare from "@/pages/Compare";
+import Tracked from "@/pages/Tracked";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -12,6 +14,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/petition/:id" component={PetitionDetail} />
+      <Route path="/compare" component={Compare} />
+      <Route path="/tracked" component={Tracked} />
       <Route component={NotFound} />
     </Switch>
   );

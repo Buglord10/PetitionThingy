@@ -7,21 +7,23 @@ import { PetitionCardSkeleton } from "@/components/PetitionCardSkeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
-import type { PetitionsResponse, PetitionStatus, PetitionSort } from "@shared/schema";
+import type { PetitionsResponse, PetitionStatus, PetitionSort, SignatureRange } from "@shared/schema";
 
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [status, setStatus] = useState<PetitionStatus>("all");
   const [sort, setSort] = useState<PetitionSort>("signature_count");
+  const [signatureRange, setSignatureRange] = useState<SignatureRange>("all");
 
   // Memoize query URL to prevent unnecessary refetches
   const queryUrl = useMemo(() => {
     const params = new URLSearchParams();
     if (status !== "all") params.append("status", status);
     params.append("sort", sort);
+    if (signatureRange !== "all") params.append("signatureRange", signatureRange);
     if (searchQuery) params.append("search", searchQuery);
     return `/api/petitions?${params.toString()}`;
-  }, [status, sort, searchQuery]);
+  }, [status, sort, signatureRange, searchQuery]);
 
   const { data, isLoading, error, refetch, dataUpdatedAt } = useQuery<PetitionsResponse>({
     queryKey: [queryUrl],
@@ -48,6 +50,8 @@ export default function Dashboard() {
         onStatusChange={setStatus}
         sort={sort}
         onSortChange={setSort}
+        signatureRange={signatureRange}
+        onSignatureRangeChange={setSignatureRange}
         searchQuery={searchQuery}
         onClearSearch={handleClearSearch}
       />

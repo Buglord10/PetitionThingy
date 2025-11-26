@@ -1,13 +1,15 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import type { PetitionStatus, PetitionSort } from "@shared/schema";
+import type { PetitionStatus, PetitionSort, SignatureRange } from "@shared/schema";
 
 interface FilterControlsProps {
   status: PetitionStatus;
   onStatusChange: (status: PetitionStatus) => void;
   sort: PetitionSort;
   onSortChange: (sort: PetitionSort) => void;
+  signatureRange: SignatureRange;
+  onSignatureRangeChange: (range: SignatureRange) => void;
   searchQuery: string;
   onClearSearch: () => void;
 }
@@ -17,14 +19,16 @@ export function FilterControls({
   onStatusChange,
   sort,
   onSortChange,
+  signatureRange,
+  onSignatureRangeChange,
   searchQuery,
   onClearSearch,
 }: FilterControlsProps) {
   return (
     <div className="bg-card border-b border-card-border">
       <div className="max-w-[1200px] mx-auto px-5 md:px-10 py-4">
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          <div className="flex-1 flex flex-wrap gap-2 items-center">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2 items-center">
             <span className="text-sm font-medium text-foreground">Filter:</span>
             <Select value={status} onValueChange={(value) => onStatusChange(value as PetitionStatus)}>
               <SelectTrigger className="w-[180px] bg-background" data-testid="select-status">
@@ -36,6 +40,18 @@ export function FilterControls({
                 <SelectItem value="closed">Closed</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
                 <SelectItem value="awaiting_response">Awaiting response</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={signatureRange} onValueChange={(value) => onSignatureRangeChange(value as SignatureRange)}>
+              <SelectTrigger className="w-[180px] bg-background" data-testid="select-signature-range">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All signatures</SelectItem>
+                <SelectItem value="under_10k">Under 10,000</SelectItem>
+                <SelectItem value="10k_to_100k">10,000 - 100,000</SelectItem>
+                <SelectItem value="over_100k">Over 100,000</SelectItem>
               </SelectContent>
             </Select>
 
